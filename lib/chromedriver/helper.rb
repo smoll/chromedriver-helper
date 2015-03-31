@@ -2,6 +2,7 @@ require "chromedriver/helper/version"
 require "chromedriver/helper/google_code_parser"
 require 'fileutils'
 require 'rbconfig'
+require 'mkmf'
 
 module Chromedriver
   class Helper
@@ -42,9 +43,21 @@ module Chromedriver
       end
     end
 
+    def set_mkmf_log(logfile = File::NULL)
+      MakeMakefile::Logging.instance_variable_set(:@logfile, logfile)
+    end
+
+    # Return path to cmd as a String, or nil if not found.
+    def which(cmd)
+      old_mkmf_log = MakeMakefile::Logging.instance_variable_get(:@logfile)
+      set_mkmf_log(nil)
+      path_to_cmd = find_executable(cmd)
+      set_mkmf_log(old_mkmf_log)
+      path_to_cmd
+    end
+
     def preexisting_installation
-      require 'mkmf'
-      find_executable 'chromedriver'
+      which 'chromedriver'
     end
 
     def platform_install_dir
