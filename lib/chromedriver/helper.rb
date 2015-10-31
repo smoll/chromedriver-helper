@@ -5,6 +5,7 @@ require 'rbconfig'
 require 'open-uri'
 require 'archive/zip'
 require 'mkmf'
+require 'pathname'
 
 module Chromedriver
   class Helper
@@ -51,7 +52,24 @@ module Chromedriver
     end
 
     def preexisting_installation
-      find_executable0 binary_name
+      result = []
+      # Identify this to avoid calling recursively
+      wrapper_path = File.join(Gem::Specification.find_by_name("chromedriver-helper").bin_dir, "chromedriver") # does not actually work, when `gem install chromedriver-helper` was used
+      entries = ENV['PATH'].split(platform == "win" ? ";" : ":")
+      entries.find_all do |path|
+        bin = File.join(path, "chromedriver")
+        if File.exist?(bin)
+          next if bin == wrapper_path
+          puts "-" * 10
+          puts "bin: #{bin}"
+          puts "wrapper: #{wrapper_path}"
+          puts "-" * 10
+          result << bin
+        end
+      end
+      # Check if more than one bin path found
+      fail "More than 1 preexisting chromedriver binary found in PATH! Cannot pick one deterministically! Binaries: #{result}" if result.count > 1
+      result.count == 0 ? nil : result[0]
     end
 
     def platform_install_dir
