@@ -68,8 +68,12 @@ module Chromedriver
         end
       end
       # Check if more than one bin path found
-      fail "More than 1 preexisting chromedriver binary found in PATH! Cannot pick one deterministically! Binaries: #{result}" if result.count > 1
-      result.count == 0 ? nil : result[0]
+      case result.count
+      when 0 then nil
+      when 1 then result.first
+      else
+        fail "More than 1 preexisting chromedriver binary found in PATH! Cannot pick one deterministically! Binaries: #{result}"
+      end
     end
 
     def platform_install_dir
